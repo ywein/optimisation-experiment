@@ -9,7 +9,6 @@ A Dual Annealing global optimization algorithm
 
 import numpy as np
 from scipy.optimize import OptimizeResult
-from scipy.optimize import minimize
 from scipy.special import gammaln
 from scipy._lib._util import check_random_state
 

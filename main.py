@@ -1,18 +1,17 @@
 # This is a sample Python script.
 
+import random
 # Press ⌃R to execute it or replace it with your code.
 # Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
-import sys
 import time
-from math import ceil, floor
-import matplotlib.pyplot as plt
-import random
+from math import floor
+
 import numpy as np
-import scipy.optimize as opt
 
 from anneal import dual_annealing
-
-from local import localSearchOneStep
+from local import generateRandomSolution, localSearchOneStep, genareteSolution
+from evaluate import evaluate
+from tabu import tabu_search
 
 def placeShifts(offsets, shiftLength, hoursBetween):
     shifts = []
@@ -21,87 +20,7 @@ def placeShifts(offsets, shiftLength, hoursBetween):
     return shifts
 
 
-def evaluate(shifts, shiftLength, hoursBetween, maxWorking, maxOff, minWorking, minOff, numHours, test=False):
-    shifts = [round(x) for x in shifts]
-    shifts.sort()
-    prevShift = shifts[0]
-    consecutiveWorkings = []
-    consecutiveOffs = []
-    if prevShift >= 24:
-        consecutiveOffs = [floor(prevShift / 24)]
 
-    working = 0
-    off = 0
-    penalty = 0
-    for i in range(len(shifts) - 1):
-        n = i + 1
-        curShift = shifts[n]
-        distanceBetween = curShift - prevShift - shiftLength - hoursBetween
-        if test:
-            print(n, curShift, distanceBetween)
-
-        if working == 0:
-            working = 1
-
-        off = 0
-
-        if distanceBetween < 0:
-            penalty -= 5
-
-        if distanceBetween < 24:
-            working += 1
-        else:
-            if working != 0:
-                consecutiveWorkings.append(working)
-            working = 0
-            if test:
-                print("distanceBetween", distanceBetween)
-            off = floor(distanceBetween / 24)
-            if off != 0:
-                if test:
-                    print("off", off)
-                consecutiveOffs.append(off)
-
-        if n == len(shifts) - 1:
-            off += floor((numHours - curShift - (shiftLength + hoursBetween)) / 24)
-            if off < 0:
-                off = 0
-            if test:
-                print("final off", off, numHours, curShift, numHours - curShift - (shiftLength))
-            if off != 0:
-                consecutiveOffs.append(off)
-            if working == 0:
-                working = 1
-            consecutiveWorkings.append(working)
-
-        prevShift = curShift
-
-    if len(consecutiveWorkings) == 0:
-        consecutiveWorkings.append(0)
-    if len(consecutiveOffs) == 0:
-        consecutiveOffs.append(0)
-
-    for w in consecutiveWorkings:
-        if w > maxWorking:
-            if test:
-                print('maxWorking')
-            penalty -= 1
-        if w < minWorking:
-            if test:
-                print('minWorking')
-            penalty -= 1
-
-    for o in consecutiveOffs:
-        if o > maxOff:
-            if test:
-                print('maxOff')
-            penalty -= 1
-        if o < minOff:
-            if test:
-                print('minOff')
-            penalty -= 1
-
-    return -penalty
 
 def ch():
     print("ch")
@@ -212,8 +131,8 @@ def main():
 
     # [48, 72, 96, 120, 144]
     # [0, 24, 96, 120, 144]
-    f = evaluate([69, 108, 141, 235, 266, 294, 329, 374, 476, 503, 537, 561, 608, 639, 681], shiftLength, hoursBetween, maxWorking, maxOff, minWorking, minOff, numHours, True)
-    print(f)
+    # f = evaluate([69, 108, 141, 235, 266, 294, 329, 374, 476, 503, 537, 561, 608, 639, 681], shiftLength, hoursBetween, maxWorking, maxOff, minWorking, minOff, numHours, True)
+    # print(f)
     fitnesses = []
     iterations = []
     validShifts = 0
@@ -241,15 +160,24 @@ def main():
     count = 1
     sumTime = 0
     bestS = []
-    for i in range(count):
-        tic = time.perf_counter()
-        bestS = fancyAnneal(numShifts, totalShiftLength, freeSpaces, shiftLength, hoursBetween, maxWorking, maxOff, minWorking, minOff, numHours)
-        toc = time.perf_counter()
-        sumTime += toc - tic
-    print(f"fancyAnneal in {sumTime/count:0.4f} seconds")
+    # for i in range(count):
+    #     tic = time.perf_counter()
+    #     bestS = fancyAnneal(numShifts, totalShiftLength, freeSpaces, shiftLength, hoursBetween, maxWorking, maxOff, minWorking, minOff, numHours)
+    #     toc = time.perf_counter()
+    #     sumTime += toc - tic
+    # print(f"fancyAnneal in {sumTime/count:0.4f} seconds")
 
-    print("bestS", bestS)
-    print(localSearchOneStep(bestS, totalShiftLength, numHours))
+    # randS = generateRandomSolution(freeSpaces, totalShiftLength, numHours, numShifts)
+    # print(localSearchOneStep(totalShiftLength, shiftLength, hoursBetween, maxWorking, maxOff, minWorking, minOff, numHours)(randS))
+    #
+    eval = evaluate(shiftLength, hoursBetween, maxWorking, maxOff, minWorking, minOff, numHours, True)
+    # localSearch = localSearchOneStep(totalShiftLength, shiftLength, hoursBetween, maxWorking, maxOff, minWorking, minOff, numHours)
+    #
+    # bestS = tabu_search(randS, 500000, 10000, localSearch, eval)
+    # print(bestS)
+
+    testS = genareteSolution(freeSpaces, totalShiftLength, shiftLength, hoursBetween, maxWorking, maxOff, minWorking, minOff, numHours, numShifts)
+    print(testS, eval(testS))
 
     # sumTime = 0
     # for i in range(count):
